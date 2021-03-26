@@ -1,0 +1,59 @@
+<!-- Settings Panel -->
+<script type="text/x-red" data-template-name="artnet-universe">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-artnet"><i class="icon-bookmark"></i> Artnet</label>
+        <input type="text" id="node-config-input-artnet">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-ipAddress"><i class="icon-bookmark"></i> IP Address</label>
+        <input type="text" id="node-config-input-ipAddress">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="icon-bookmark"></i> Port</label>
+        <input type="text" id="node-config-input-port">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-subnet"><i class="icon-bookmark"></i> Subnet</label>
+        <input type="text" id="node-config-input-subnet">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-universe"><i class="icon-bookmark"></i> Universe</label>
+        <input type="text" id="node-config-input-universe">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-net"><i class="icon-bookmark"></i> Net</label>
+        <input type="text" id="node-config-input-net">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-refresh"><i class="icon-bookmark"></i> Refresh Interval</label>
+        <input type="text" id="node-config-input-refresh">
+    </div>
+</script>
+
+<!-- Register -->
+<script type="text/javascript">
+    RED.nodes.registerType('artnet-universe', {
+        category: 'config',
+        defaults: {
+            name: {value: ""},
+            artnet: {value: "", type: "artnet-artnet"},
+            ipAddress: {value: "255.255.255.255", required: true},
+            port: {value: "6454", required: true, validate: RED.validators.number()},
+            subnet: {value: "0", required: true, validate: RED.validators.number()},
+            universe: {value: "0", required: true, validate: RED.validators.number()},
+            net: {value: "0", required: true, validate: RED.validators.number()},
+            refresh: {value: "1000", required: true, validate: RED.validators.number()}
+        },
+        label: function() {
+            return this.name||"Artnet Universe";
+        }
+    });
+</script>
+
+<!-- Information Panel -->
+<script type="text/x-red" data-help-name="artnet-universe">
+</script>

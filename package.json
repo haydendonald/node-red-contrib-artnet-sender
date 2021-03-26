@@ -1,0 +1,35 @@
+{
+  "name": "node-red-contrib-artnet-sender",
+  "version": "1.0.0",
+  "description": "A DMX sender using Artnet for NodeRed",
+  "main": "universe.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:haydendonald/node-red-contrib-artnet-sender.git"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "node-red",
+    "artnet",
+    "dmx",
+    "sender",
+    "dmxnet",
+    "lighting",
+    "universe"
+  ],
+  "node-red": {
+    "nodes": {
+      "Artnet": "artnet.js",
+      "ArtnetUniverse": "universe.js",
+      "ArtnetOutput": "output.js"
+    }
+  },
+  "dependencies": {
+    "dmxnet": "0.6.0"
+  },
+  "author": "Hayden Donald",
+  "bugs": {
+    "url": "https://github.com/haydendonald/node-red-contrib-artnet-sender/issues"
+  },
+  "homepage": "https://github.com/estbeetoo/node-red-contrib-artnet-sender#readme"
+}

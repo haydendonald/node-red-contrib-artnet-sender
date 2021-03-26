@@ -1,0 +1,51 @@
+<!-- Settings Panel -->
+<script type="text/x-red" data-template-name="artnet-artnet">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-log"><i class="icon-bookmark"></i> Log Level</label>
+        <select id="node-config-input-log">
+            <option value=""></option>
+            <option value="error">Errors</option>
+            <option value="warn">Warnings</option>
+            <option value="info">Info</option>
+            <option value="verbose">Verbose</option>
+            <option value="debug">Debug</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-oem"><i class="icon-bookmark"></i> OEM Code</label>
+        <input type="text" id="node-config-input-oem">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-sName"><i class="icon-bookmark"></i> Short Name</label>
+        <input type="text" id="node-config-input-sName">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-lName"><i class="icon-bookmark"></i> Long Name</label>
+        <input type="text" id="node-config-input-lName">
+    </div>
+</script>
+
+<!-- Register -->
+<script type="text/javascript">
+    RED.nodes.registerType('artnet-artnet', {
+        category: 'config',
+        defaults: {
+            name: {value: ""},
+            log: {value: "info", required: true},
+            oem: {value: "0", required: true, validate: RED.validators.number()},
+            sName: {value: "NodeRed", required: true},
+            lName: {value: "NodeRed Artnet", required: true}
+        },
+        label: function() {
+            return this.name||"Artnet";
+        }
+    });
+</script>
+
+<!-- Information Panel -->
+<script type="text/x-red" data-help-name="artnet-artnet">
+</script>

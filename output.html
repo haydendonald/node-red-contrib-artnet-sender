@@ -1,0 +1,36 @@
+
+<!-- Settings Panel -->
+<script type="text/x-red" data-template-name="artnet-output">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-universe"><i class="icon-bookmark"></i> Universe</label>
+        <input type="text" id="node-input-universe">
+    </div>
+</script>
+
+<!-- Register -->
+<script type="text/javascript">
+    RED.nodes.registerType('artnet-output', {
+        category: 'DMX',
+        color: '#ffffef',
+        defaults: {
+            name: {value: ""},
+            universe: {value: "", type: "artnet-universe"},
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "light.svg",
+        align: "right",
+        paletteLabel: "Artnet Output",
+        label: function() {
+            return this.name||"Artnet Output";
+        }
+    });
+</script>
+
+<!-- Information Panel -->
+<script type="text/x-red" data-help-name="artnet-output">
+</script>
