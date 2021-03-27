@@ -21,8 +21,6 @@ Provides a place to send Artnet data to.
 ### Options
 - ```Name``` the flow visible name
 - ```Universe``` the universe to send to (This is a universe node seen above)
-- ```Channels``` the channel values to set (Can overridden using ```msg.payload.channels = {"channel": 1, "value": 255}```)
-- ```Fade Time``` the time in milliseconds to fade over (Can be overridden using ```msg.payload.fadeTime = 1000```)
 
 ### Input Payload
 The following is the basic format expected for input to the output node
@@ -51,3 +49,5 @@ However the universe can be also reset to 0 by sending the following
 # Version
 ## 1.0.0
 * First release!
+    * Supports multiple universes
+    * Supports basic channel outputs with fade time

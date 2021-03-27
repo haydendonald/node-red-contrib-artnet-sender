@@ -37,6 +37,18 @@ module.exports = function(RED)
             }
         });
 
+        universe.addValueCallback((output) => {
+            var channels = {};
+            for(var i = 0; i < output.length; i++) {
+                channels[i] = {"value": output[i]};
+            }
+            node.sendMessage({
+                "payload": {
+                    "channels": channels
+                }
+            });
+        });
+
         //The msg output handler. We also add some information about the universe
         node.sendMessage = function(msg) {
             msg.universe = {

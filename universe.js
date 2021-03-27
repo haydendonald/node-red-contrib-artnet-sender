@@ -15,6 +15,7 @@ module.exports = function(RED)
         node.artnet = RED.nodes.getNode(config.artnet);
         node.fade = false;
         node.statusCallbacks = [];
+        node.valueCallbacks = [];
         node.currentOutput = [];
         node.preparedChannels = {};
         node.channelFadeHandler;
@@ -22,9 +23,15 @@ module.exports = function(RED)
     
         //Add callbacks for status information
         node.addStatusCallback = function(func) {node.statusCallbacks.push(func);}
+        node.addValueCallback = function(func) {node.valueCallbacks.push(func);}
         node.updateStatus = function(color, message) {
-            for(var i in statusCallbacks) {
+            for(var i in node.statusCallbacks) {
                 node.statusCallbacks[i](color, message);
+            }
+        }
+        node.updateValue = function(values) {
+            for(var i in node.valueCallbacks) {
+                node.valueCallbacks[i](node.currentOutput);
             }
         }
 
@@ -40,7 +47,14 @@ module.exports = function(RED)
 
         //Add listener to self to store current artnet data
         node.artnet.addDataListener(artnetId, (data) => {
-            node.currentOutput = data;
+            //Only send updates if something actually changed
+            for(var i = 0; i < data.length; i++) {
+                if(data[i] != node.currentOutput[i]) {
+                    node.currentOutput = data;
+                    node.updateValue(data);
+                    break;
+                }
+            }
         });
 
         //Add channels ready to send
