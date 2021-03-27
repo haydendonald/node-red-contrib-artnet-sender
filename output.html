@@ -33,4 +33,33 @@
 
 <!-- Information Panel -->
 <script type="text/x-red" data-help-name="artnet-output">
+    This node is responsible for sending artnet data
+    <h1>Properties</h1>
+    <ul>
+        <li><strong>Name</strong> the flow visible name</li>
+        <li><strong>Universe</strong> the universe to send to</li>
+    </ul>
+
+    <h1>Input Payload</h1>
+    This node supports inputting channel information with a payload containing the following data
+    <ul>
+        <li><strong>channels</strong> a object containing the channels to be updated</li>
+        <li><strong>fadeTime</strong> the general fadeTime for all channels unless specified in the channel</li>
+    </ul>
+    Each channel within the channels object must contain a value, and can contain a fadeTime to override the general fadeTime
+    
+    <h1>Example payload</h1>
+    The following will set channel 1 to 255 over 5 seconds and channel 230 to 10 over 1 second
+    <code>
+        {
+            "payload": {
+                "channels": {
+                    1: {value: 255, fadeTime: 5000}, //The channel 1 to value 255 with a fade time of 5 seconds
+                    230: {value: 10} //Channel 230 to value 10 with the default fadeTime set below
+                },
+        
+                "fadeTime": 1000 // The fade time for all channels that don't have a specific fadeTime set
+            }
+        }
+    </code>
 </script>

@@ -35,7 +35,7 @@
         category: 'config',
         defaults: {
             name: {value: ""},
-            log: {value: "info", required: true},
+            log: {value: "warning", required: true},
             oem: {value: "0", required: true, validate: RED.validators.number()},
             sName: {value: "NodeRed", required: true},
             lName: {value: "NodeRed Artnet", required: true}
@@ -48,4 +48,14 @@
 
 <!-- Information Panel -->
 <script type="text/x-red" data-help-name="artnet-artnet">
+    This node is responsible for artnet
+    <h1>Properties</h1>
+    <ul>
+        <li><strong>Name</strong> the flow visible name</li>
+        <li><strong>Artnet</strong> the artnet object</li>
+        <li><strong>Log</strong> what logging level should be used for the artnet</li>
+        <li><strong>Oem</strong> the oem id for artnet</li>
+        <li><strong>sName</strong> the short name for this artnet instance</li>
+        <li><strong>lName</strong> the long name for this artnet instance</li>
+    </ul>
 </script>
