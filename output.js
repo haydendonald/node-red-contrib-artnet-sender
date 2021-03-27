@@ -53,7 +53,26 @@ module.exports = function(RED)
 
         //When we get an input on the node validate it and translate
         this.on("input", function(msg) {
-            node.sendMessage({});
+            switch(msg.topic) {
+                case "reset": {
+                    universe.reset();
+                    break;
+                }
+                default: {
+                    if(msg.payload === undefined) {
+                        node.error("There is no payload specified");
+                        return;
+                    }
+                    else {
+                        var channels = msg.payload.channels || [];
+                        var fadeTime = msg.payload.fadeTime || 0;
+                        for(var i in channels) {
+                            universe.prepChannel(parseInt(i), channels[i].value, channels[i].fadeTime || fadeTime);
+                        }
+                        universe.sendChannels();
+                    }
+                }
+            }
         });
 
     }

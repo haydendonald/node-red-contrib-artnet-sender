@@ -25,7 +25,7 @@
     }
   },
   "dependencies": {
-    "dmxnet": "0.6.0"
+    "dmxnet": "0.7.0"
   },
   "author": "Hayden Donald",
   "bugs": {
