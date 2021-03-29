@@ -9,7 +9,10 @@ module.exports = function(RED)
         node.ipAddress = config.ipAddress;
         node.port = config.port;
         node.subnet = config.subnet;
-        node.universe = config.universe;
+        node.universeAuto = parseInt(config.universeAuto);
+        node.universeManual = config.universeManual;
+        node.artnetType = config.artnetType;
+        node.channels = config.channels;
         node.net = config.net;
         node.refresh = config.refresh;
         node.artnet = RED.nodes.getNode(config.artnet);
@@ -18,8 +21,9 @@ module.exports = function(RED)
         node.valueCallbacks = [];
         node.currentOutput = [];
         node.preparedChannels = {};
-        node.channelFadeHandler;
-        var artnetId;
+        node.universeFadeHandlers = [];
+        node.universeId;
+        node.universeCount = 1;
     
         //Add callbacks for status information
         node.addStatusCallback = function(func) {node.statusCallbacks.push(func);}
@@ -35,67 +39,102 @@ module.exports = function(RED)
             }
         }
 
-        //Add this universe
-        artnetId = node.artnet.addUniverse({
-            "ip": node.ipAddress,
-            "subnet": node.subnet,
-            "universe": node.universe,
-            "net": node.net,
-            "port": node.port,
-            "base_refresh_interval": node.refresh
-        });
-
-        //Add listener to self to store current artnet data
-        node.artnet.addDataListener(artnetId, (data) => {
-            //Only send updates if something actually changed
-            for(var i = 0; i < data.length; i++) {
-                if(data[i] != node.currentOutput[i]) {
-                    node.currentOutput = data;
-                    node.updateValue(data);
-                    break;
+        node.universeHandler = function(universe) {
+            var changed = false;
+            if(node.fade) {
+                for(var i in node.preparedChannels) {
+                    if(node.preparedChannels[i].universe == universe) {
+                        console.log(universe);
+                        if(node.preparedChannels[i].value == node.currentOutput[i]) {
+                            node.preparedChannels[i].changes = 0;
+                        }
+                        else {
+                            var updatesPerMS = node.preparedChannels[i].changes * ((node.preparedChannels.length / 10) / node.preparedChannels[i].fadeTime);
+                            node.preparedChannels[i].current += updatesPerMS;
+                            if(node.preparedChannels[i].current > node.preparedChannels[i].value && updatesPerMS > 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
+                            if(node.preparedChannels[i].current < node.preparedChannels[i].value && updatesPerMS < 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
+                            node.artnet.setChannel(node.universeId + universe, parseInt(i) - (512 * universe), node.preparedChannels[i].current);
+                        }
+                    }
                 }
             }
-        });
+        }
+
+        //Add this universe(s)
+        if(node.artnetType == "auto") {
+            node.universeCount = Math.ceil(node.channels / 512);
+            for(var i = 0; i < node.universeCount; i++) {
+                var subnet = parseInt((node.universeAuto + i) / 16);
+                var net = parseInt((node.universeAuto + i) / 256);
+                var universe = (node.universeAuto + i) - ((subnet * 16) + (net * 256));
+                var id = node.artnet.addUniverse({
+                    "ip": node.ipAddress,
+                    "subnet": subnet,
+                    "universe": universe,
+                    "net": net,
+                    "port": node.port,
+                    "base_refresh_interval": node.refresh
+                });
+                node.universeFadeHandlers[id] = setInterval(node.universeHandler, 1, id);
+
+                //Store our start universe id
+                if(i == 0) {
+                    node.universeId = id;
+                }
+            }
+        }
+        else {
+            universeId = node.artnet.addUniverse({
+                "ip": node.ipAddress,
+                "subnet": node.subnet,
+                "universe": node.universeManual,
+                "net": node.net,
+                "port": node.port,
+                "base_refresh_interval": node.refresh
+            });
+        }
 
         //Add channels ready to send
         node.prepChannel = (channel, value, fadeTime) => {
+            if(node.currentOutput[channel] === undefined){node.currentOutput[channel] = 0;}
             node.preparedChannels[channel] = {
+                "universe": parseInt(parseInt(i) / 512),
                 "value": value,
                 "current": node.currentOutput[channel],
-                "updatesPerMS": (value - node.currentOutput[channel]) * 10 / fadeTime
+                "changes": value - node.currentOutput[channel],
+                "fadeTime": fadeTime
             }
         };
 
         //The updater to send channels (this also processes fade times)
-        node.channelFadeHandler = setInterval(() => {
-            var changed = false;
-            if(node.fade) {
-                for(var i in node.preparedChannels) {
-                    if(node.preparedChannels[i].value != node.currentOutput[i]) {
-                        changed = true;
-                        node.preparedChannels[i].current += node.preparedChannels[i].updatesPerMS;
-                        if(node.preparedChannels[i].current > node.preparedChannels[i].value && node.preparedChannels[i].updatesPerMS > 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
-                        if(node.preparedChannels[i].current < node.preparedChannels[i].value && node.preparedChannels[i].updatesPerMS < 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
-                        node.artnet.setChannel(artnetId, parseInt(i), node.preparedChannels[i].current);
-                    }
-                }
+        // node.universeFadeHandler = setInterval(() => {
+        //     var changed = false;
+        //     if(node.fade) {
+        //         for(var i in node.preparedChannels) {
+        //             var universe = parseInt(parseInt(i) / 512);
 
-                if(!changed){node.fade = false; node.preparedChannels = [];}
-                else {
-                    node.artnet.transmit(artnetId);
-                }
-            }
-        }, 1);
+        //             if(node.preparedChannels[i].value != node.currentOutput[i]) {changed = true;}
+
+        //             //var updatesPerMS = node.preparedChannels[i].changes * ((node.preparedChannels.length / 10) / node.preparedChannels[i].fadeTime);
+        //             node.preparedChannels[i].current += updatesPerMS;
+        //             if(node.preparedChannels[i].current > node.preparedChannels[i].value && updatesPerMS > 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
+        //             if(node.preparedChannels[i].current < node.preparedChannels[i].value && updatesPerMS < 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
+        //             node.artnet.setChannel(node.universeId + universe, parseInt(i) - (512 * universe), node.preparedChannels[i].current);
+        //         }
+
+        //         if(!changed){node.fade = false; node.preparedChannels = [];}
+        //     }
+        // }, 1);
 
         //Reset the universe
         node.reset = () => {
-            clearInterval(node.channelFadeHandler);
-            node.artnet.reset();
+            //clearInterval(node.channelFadeHandler);
+            node.artnet.resetUniverse(artnetIds);
         }
 
         //On close do some clean up
         node.on("close", () => {
-            clearInterval(node.channelFadeHandler);
+            //clearInterval(node.channelFadeHandler);
         });
 
         //Send the channels stored in the prepared pool

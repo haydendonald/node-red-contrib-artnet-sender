@@ -78,6 +78,13 @@ module.exports = function(RED)
                     else {
                         var channels = msg.payload.channels || [];
                         var fadeTime = msg.payload.fadeTime || 0;
+                        //Validate the channels first before sending
+                        for(var i in channels) {
+                            if(parseInt(i) > universe.universeCount * 512) {
+                                node.error("There are too many channels specified. This universe only has " + universe.universeCount * 512 + " channels (" + universe.universeCount + " universes)");
+                                return;
+                            }
+                        }
                         for(var i in channels) {
                             universe.prepChannel(parseInt(i), channels[i].value, channels[i].fadeTime || fadeTime);
                         }

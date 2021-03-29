@@ -17,21 +17,63 @@
         <input type="text" id="node-config-input-port">
     </div>
     <div class="form-row">
-        <label for="node-config-input-subnet"><i class="icon-bookmark"></i> Subnet</label>
-        <input type="text" id="node-config-input-subnet">
+        <label for="node-config-input-artnetType"><i class="icon-bookmark"></i> Type</label>
+        <select id="node-config-input-artnetType">
+            <option value="auto">Automatic</option>
+            <option value="manual">Subnet, Universe, Net</option>
+        </select>
     </div>
-    <div class="form-row">
-        <label for="node-config-input-universe"><i class="icon-bookmark"></i> Universe</label>
-        <input type="text" id="node-config-input-universe">
+    <div id="autoSet">
+        <p>Set Artnet automatically using the universe. This will calculate the universes required to allow the channels set</p>
+        <div class="form-row">
+            <label for="node-config-input-universeAuto"><i class="icon-bookmark"></i> Start Universe</label>
+            <input type="text" id="node-config-input-universeAuto">
+        </div>
+        <div class="form-row">
+            <label for="node-config-input-channels"><i class="icon-bookmark"></i> Channels</label>
+            <input type="text" id="node-config-input-channels">
+        </div>
     </div>
-    <div class="form-row">
-        <label for="node-config-input-net"><i class="icon-bookmark"></i> Net</label>
-        <input type="text" id="node-config-input-net">
+    <div id="manualSet">
+        <p>Set Artnet Manually</p>
+        <div class="form-row">
+            <label for="node-config-input-subnet"><i class="icon-bookmark"></i> Subnet</label>
+            <input type="text" id="node-config-input-subnet">
+        </div>
+        <div class="form-row">
+            <label for="node-config-input-universeManual"><i class="icon-bookmark"></i> Universe</label>
+            <input type="text" id="node-config-input-universeManual">
+        </div>
+        <div class="form-row">
+            <label for="node-config-input-net"><i class="icon-bookmark"></i> Net</label>
+            <input type="text" id="node-config-input-net">
+        </div>
     </div>
     <div class="form-row">
         <label for="node-config-input-refresh"><i class="icon-bookmark"></i> Refresh Interval</label>
         <input type="text" id="node-config-input-refresh">
     </div>
+
+    <script>
+        var update = () => {
+            switch(document.getElementById("node-config-input-artnetType").value) {
+                case "auto": {
+                    document.getElementById("autoSet").style.display = "block";
+                    document.getElementById("manualSet").style.display = "none";
+                    break;
+                }
+                case "manual": {
+                    document.getElementById("autoSet").style.display = "none";
+                    document.getElementById("manualSet").style.display = "block";
+                    break;
+                }
+            }
+        }
+        document.getElementById("node-config-input-artnetType").onchange = () => {
+            update();
+        }
+        update();
+    </script>
 </script>
 
 <!-- Register -->
@@ -43,8 +85,11 @@
             artnet: {value: "", type: "artnet-artnet"},
             ipAddress: {value: "255.255.255.255", required: true},
             port: {value: "6454", required: true, validate: RED.validators.number()},
+            artnetType: {value: "auto", required: true},
+            channels: {value: "512", required: true, validate: RED.validators.number()},
             subnet: {value: "0", required: true, validate: RED.validators.number()},
-            universe: {value: "0", required: true, validate: RED.validators.number()},
+            universeAuto: {value: "0", required: true, validate: RED.validators.number()},
+            universeManual: {value: "0", required: true, validate: RED.validators.number()},
             net: {value: "0", required: true, validate: RED.validators.number()},
             refresh: {value: "1000", required: true, validate: RED.validators.number()}
         },

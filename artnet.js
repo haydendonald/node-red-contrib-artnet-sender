@@ -2,7 +2,7 @@ module.exports = function(RED)
 {
     var dmxlib = require('dmxnet');
     var dmxnet = undefined;
-    var universes = [];
+    var universes = {};
 
     //Main Function
     function Artnet(config)
@@ -23,32 +23,22 @@ module.exports = function(RED)
 
         //Add a new universe, returns an id that should be used to interface with each universe
         node.addUniverse = (options) => {
-            for(var i in dmxnet.senders) {
-                if(dmxnet.senders[i].net == options.net) {
-                    if(dmxnet.senders[i].subnet == options.subnet) {
-                        if(dmxnet.senders[i].universe == options.universe) {
-                            if(dmxnet.senders[i].ip == options.ip) {
-                                if(dmxnet.senders[i].port == options.port) {
-                                    if(dmxnet.senders[i].base_refresh_interval == options.base_refresh_interval) {
-                                        //We already have this universe, send it's id
-                                        return parseInt(i);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            var uniId = parseInt(options.universe) + (parseInt(options.subnet) * 16) + (parseInt(options.net) * 256);
+            if(universes[uniId] !== undefined) {
+                return uniId;
             }
+            else {
+                universes[uniId] = {
+                    "sender": dmxnet.newSender(options),
+                    "receiver": dmxnet.newReceiver({
+                        "subnet": options.subnet,
+                        "universe": options.universe,
+                        "net": options.net
+                    }),
+                };
 
-            universes.push({
-                "sender": dmxnet.newSender(options),
-                "receiver": dmxnet.newReceiver({
-                    "subnet": options.subnet,
-                    "universe": options.universe,
-                    "net": options.net
-                }),
-            });
-            return universes.length - 1;
+                return uniId;
+            }
         };
 
         //Add a listener to updated channel information
@@ -58,12 +48,7 @@ module.exports = function(RED)
 
         //Set a channel to the universe
         node.setChannel = (universeId, channel, value) => {
-            universes[universeId].sender.prepChannel(channel, value);
-        };
-
-        //Transmit
-        node.transmit = (universeId) => {
-            universes[universeId].sender.transmit();
+            universes[universeId].sender.setChannel(channel, value);
         };
 
         //Reset a universe
