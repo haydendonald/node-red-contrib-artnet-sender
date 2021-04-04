@@ -3,6 +3,8 @@ module.exports = function(RED)
     var dmxlib = require('dmxnet');
     var dmxnet = undefined;
     var universes = {};
+    var universeSenders = [];
+    var universeValues = {};
 
     //Main Function
     function Artnet(config)
@@ -36,24 +38,33 @@ module.exports = function(RED)
                         "net": options.net
                     }),
                 };
+                for(var i = 0; i < 512; i++) {
+                    universes[uniId][i] = 0;
+                }
+                universeSenders[uniId] = setInterval(function() {
+                    universes[uniId].sender.transmit();
+                }, 1);
 
                 return uniId;
             }
         };
 
-        //Add a listener to updated channel information
-        node.addDataListener = (universeId, func) => {
-            universes[universeId].receiver.on("data", func);
-        }
-
         //Set a channel to the universe
         node.setChannel = (universeId, channel, value) => {
-            universes[universeId].sender.setChannel(channel, value);
+            universes[universeId].sender.prepChannel(channel, value);            
+            universes[universeId][channel] = value;
         };
+
+        node.getChannel = (universeId, channel) => {
+            return universes[universeId][channel];
+        }
 
         //Reset a universe
         node.resetUniverse = (universeId) => {
             universes[universeId].sender.reset();
+            for(var i = 0; i < 512; i++) {
+                universes[universeId][i] = 0;
+            }
         };
     }
 

@@ -10,7 +10,8 @@ module.exports = function(RED)
         node.port = config.port;
         node.subnet = config.subnet;
         node.universeAuto = parseInt(config.universeAuto);
-        node.universeManual = config.universeManual;
+        node.universeManual = parseInt(config.universeManual);
+        node.startChannel = 0;
         node.artnetType = config.artnetType;
         node.channels = config.channels;
         node.net = config.net;
@@ -19,11 +20,10 @@ module.exports = function(RED)
         node.fade = false;
         node.statusCallbacks = [];
         node.valueCallbacks = [];
-        node.currentOutput = [];
         node.preparedChannels = {};
-        node.universeFadeHandlers = [];
         node.universeId;
         node.universeCount = 1;
+        node.fadeHandlers = [];
     
         //Add callbacks for status information
         node.addStatusCallback = function(func) {node.statusCallbacks.push(func);}
@@ -33,35 +33,25 @@ module.exports = function(RED)
                 node.statusCallbacks[i](color, message);
             }
         }
-        node.updateValue = function(values) {
+        node.updateValue = function() {
             for(var i in node.valueCallbacks) {
-                node.valueCallbacks[i](node.currentOutput);
-            }
-        }
-
-        node.universeHandler = function(universe) {
-            var changed = false;
-            if(node.fade) {
-                for(var i in node.preparedChannels) {
-                    if(node.preparedChannels[i].universe == universe) {
-                        console.log(universe);
-                        if(node.preparedChannels[i].value == node.currentOutput[i]) {
-                            node.preparedChannels[i].changes = 0;
-                        }
-                        else {
-                            var updatesPerMS = node.preparedChannels[i].changes * ((node.preparedChannels.length / 10) / node.preparedChannels[i].fadeTime);
-                            node.preparedChannels[i].current += updatesPerMS;
-                            if(node.preparedChannels[i].current > node.preparedChannels[i].value && updatesPerMS > 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
-                            if(node.preparedChannels[i].current < node.preparedChannels[i].value && updatesPerMS < 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
-                            node.artnet.setChannel(node.universeId + universe, parseInt(i) - (512 * universe), node.preparedChannels[i].current);
-                        }
+                var ret = [];
+                for(var j = node.universeId; j < node.universeId; j++) {
+                    ret[j] = {
+                        "channels": []
+                    };
+                    for(var k = 0; j < 512; j++) {
+                        ret[j].channels[k] = node.artnet.getChannel(j, k);
                     }
                 }
+
+                node.valueCallbacks[i](ret);
             }
         }
 
         //Add this universe(s)
         if(node.artnetType == "auto") {
+            node.startChannel = node.universeAuto * 512;
             node.universeCount = Math.ceil(node.channels / 512);
             for(var i = 0; i < node.universeCount; i++) {
                 var subnet = parseInt((node.universeAuto + i) / 16);
@@ -75,7 +65,6 @@ module.exports = function(RED)
                     "port": node.port,
                     "base_refresh_interval": node.refresh
                 });
-                node.universeFadeHandlers[id] = setInterval(node.universeHandler, 1, id);
 
                 //Store our start universe id
                 if(i == 0) {
@@ -84,6 +73,7 @@ module.exports = function(RED)
             }
         }
         else {
+            node.startChannel = node.universeManual * 512;
             universeId = node.artnet.addUniverse({
                 "ip": node.ipAddress,
                 "subnet": node.subnet,
@@ -96,50 +86,47 @@ module.exports = function(RED)
 
         //Add channels ready to send
         node.prepChannel = (channel, value, fadeTime) => {
-            if(node.currentOutput[channel] === undefined){node.currentOutput[channel] = 0;}
+            var universe = parseInt(channel / 512) + node.universeId;
+            var uniChannel = channel - (parseInt(channel / 512) * 512);
+            var changes = value - node.artnet.getChannel(universe, uniChannel);
+
             node.preparedChannels[channel] = {
-                "universe": parseInt(parseInt(i) / 512),
+                "universe": universe,
+                "uniChannel": uniChannel,
+                "changes": value - node.artnet.getChannel(universe, uniChannel),
+                "fadeTime": fadeTime,
                 "value": value,
-                "current": node.currentOutput[channel],
-                "changes": value - node.currentOutput[channel],
-                "fadeTime": fadeTime
-            }
+                "changes": Math.abs(changes)
+            };
         };
-
-        //The updater to send channels (this also processes fade times)
-        // node.universeFadeHandler = setInterval(() => {
-        //     var changed = false;
-        //     if(node.fade) {
-        //         for(var i in node.preparedChannels) {
-        //             var universe = parseInt(parseInt(i) / 512);
-
-        //             if(node.preparedChannels[i].value != node.currentOutput[i]) {changed = true;}
-
-        //             //var updatesPerMS = node.preparedChannels[i].changes * ((node.preparedChannels.length / 10) / node.preparedChannels[i].fadeTime);
-        //             node.preparedChannels[i].current += updatesPerMS;
-        //             if(node.preparedChannels[i].current > node.preparedChannels[i].value && updatesPerMS > 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
-        //             if(node.preparedChannels[i].current < node.preparedChannels[i].value && updatesPerMS < 0){node.preparedChannels[i].current = node.preparedChannels[i].value;}
-        //             node.artnet.setChannel(node.universeId + universe, parseInt(i) - (512 * universe), node.preparedChannels[i].current);
-        //         }
-
-        //         if(!changed){node.fade = false; node.preparedChannels = [];}
-        //     }
-        // }, 1);
-
-        //Reset the universe
-        node.reset = () => {
-            //clearInterval(node.channelFadeHandler);
-            node.artnet.resetUniverse(artnetIds);
-        }
 
         //On close do some clean up
         node.on("close", () => {
-            //clearInterval(node.channelFadeHandler);
+            node.preparedChannels = {};
+            for(var i in node.fadeHandlers) {
+                clearTimeout(node.fadeHandlers[i]);
+            }
         });
 
         //Send the channels stored in the prepared pool
         node.sendChannels = () => {
-            node.fade = true;
+            var addFadeHandler = function(current) {
+                node.fadeHandlers.push(setTimeout(function() {
+                    if(node.artnet.getChannel(current.universe, current.uniChannel) > current.value) {
+                        node.artnet.setChannel(current.universe, current.uniChannel, node.artnet.getChannel(current.universe, current.uniChannel) - 1);
+                    }
+                    else if(node.artnet.getChannel(current.universe, current.uniChannel) < current.value) {
+                        node.artnet.setChannel(current.universe, current.uniChannel, node.artnet.getChannel(current.universe, current.uniChannel) + 1);
+                    }
+                }, j * (current.fadeTime / current.changes)));
+            }
+
+            for(var i in node.preparedChannels) {
+                var current = node.preparedChannels[i];
+                for(var j = 0; j < current.changes; j++) {
+                    addFadeHandler(current);
+                }
+            }
         };
     }
 

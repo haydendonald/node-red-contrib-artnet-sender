@@ -38,14 +38,8 @@ module.exports = function(RED)
         });
 
         universe.addValueCallback((output) => {
-            var channels = {};
-            for(var i = 0; i < output.length; i++) {
-                channels[i] = {"value": output[i]};
-            }
             node.sendMessage({
-                "payload": {
-                    "channels": channels
-                }
+                "payload": output
             });
         });
 
