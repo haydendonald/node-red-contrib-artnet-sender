@@ -45,15 +45,6 @@ module.exports = function(RED)
 
         //The msg output handler. We also add some information about the universe
         node.sendMessage = function(msg) {
-            msg.universe = {
-                "name": universe.name,
-                "IPAddress": universe.ipAddress,
-                "port": universe.port,
-                "subnet": universe.subnet,
-                "universe": universe.universe,
-                "net": universe.net,
-                "refresh": universe.refresh
-            }
             node.send(msg);
         }
 

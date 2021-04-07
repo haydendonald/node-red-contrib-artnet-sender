@@ -1,9 +1,6 @@
 # Artnet for NodeRed
 This project provides sending of DMX data over multiple universes using Artnet via [dmxnet](https://github.com/margau/dmxnet) by margau.
 
-## Currently under development!
-This project is currently under development and is not ready for use.
-
 # Nodes
 ## Universe
 Provides access to a universe

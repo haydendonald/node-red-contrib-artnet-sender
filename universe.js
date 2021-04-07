@@ -17,7 +17,6 @@ module.exports = function(RED)
         node.net = config.net;
         node.refresh = config.refresh;
         node.artnet = RED.nodes.getNode(config.artnet);
-        node.fade = false;
         node.statusCallbacks = [];
         node.valueCallbacks = [];
         node.preparedChannels = {};
@@ -28,24 +27,42 @@ module.exports = function(RED)
         //Add callbacks for status information
         node.addStatusCallback = function(func) {node.statusCallbacks.push(func);}
         node.addValueCallback = function(func) {node.valueCallbacks.push(func);}
-        node.updateStatus = function(color, message) {
-            for(var i in node.statusCallbacks) {
-                node.statusCallbacks[i](color, message);
-            }
-        }
-        node.updateValue = function() {
-            for(var i in node.valueCallbacks) {
-                var ret = [];
-                for(var j = node.universeId; j < node.universeId; j++) {
-                    ret[j] = {
-                        "channels": []
-                    };
-                    for(var k = 0; j < 512; j++) {
-                        ret[j].channels[k] = node.artnet.getChannel(j, k);
+        // node.updateStatus = function(color, message) {
+        //     for(var i in node.statusCallbacks) {
+        //         node.statusCallbacks[i](color, message);
+        //     }
+        // }
+        // node.updateValue = function() {
+        //     for(var i in node.valueCallbacks) {
+        //         var ret = [];
+        //         for(var j = node.universeId; j < node.universeId; j++) {
+        //             ret[j] = {
+        //                 "channels": []
+        //             };
+        //             for(var k = 0; j < 512; j++) {
+        //                 ret[j].channels[k] = node.artnet.getChannel(j, k);
+        //             }
+        //         }
+
+        //         node.valueCallbacks[i](ret);
+        //     }
+        // }
+
+        //Current bug: Stored channels are outputting as undefined
+        node.incomingArtnetData = function(universe, data) {
+            var channels = [];
+            for(var i = node.universeId; i < universe; i++) {
+                for(var j = 0; j < 512; j++) {
+                    if(i == universe) {
+                        channels[(i * 512) + j] = data[j];
+                    }
+                    else {
+                        channels[(i * 512) + j] = node.artnet.getChannel(i, j);
                     }
                 }
-
-                node.valueCallbacks[i](ret);
+            }
+            for(var i in node.valueCallbacks) {
+                node.valueCallbacks[i]({"channels": channels});
             }
         }
 
@@ -64,7 +81,7 @@ module.exports = function(RED)
                     "net": net,
                     "port": node.port,
                     "base_refresh_interval": node.refresh
-                });
+                }, node.incomingArtnetData);
 
                 //Store our start universe id
                 if(i == 0) {
@@ -81,7 +98,7 @@ module.exports = function(RED)
                 "net": node.net,
                 "port": node.port,
                 "base_refresh_interval": node.refresh
-            });
+            }, node.incomingArtnetData);
         }
 
         //Add channels ready to send

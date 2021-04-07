@@ -1,3 +1,5 @@
+const universe = require('./universe');
+
 module.exports = function(RED)
 {
     var dmxlib = require('dmxnet');
@@ -23,7 +25,7 @@ module.exports = function(RED)
         }
 
         //Add a new universe, returns an id that should be used to interface with each universe
-        node.addUniverse = (options) => {
+        node.addUniverse = (options, incomingDataHandler) => {
             var uniId = parseInt(options.universe) + (parseInt(options.subnet) * 16) + (parseInt(options.net) * 256);
             if(universes[uniId] !== undefined) {
                 return uniId;
@@ -36,13 +38,20 @@ module.exports = function(RED)
                         "universe": options.universe,
                         "net": options.net
                     }),
+                    "transmitter": setInterval(function() {
+                        universes[uniId].sender.transmit();
+                    }, 1)
                 };
-                // for(var i = 0; i < 512; i++) {
-                //     universes[uniId][i] = 0;
-                // }
-                universeSenders[uniId] = setInterval(function() {
-                    universes[uniId].sender.transmit();
-                }, 1);
+
+                //Send channel updates
+                universes[uniId].receiver.on("data", function(data) {
+                    for(var i = 0; i < data.length; i++) {
+                        if(universes[uniId].sender.values[i] != data[i]) {
+                            incomingDataHandler(uniId, data);
+                            break;
+                        }
+                    }
+                });
 
                 return uniId;
             }
@@ -54,15 +63,13 @@ module.exports = function(RED)
         };
 
         node.getChannel = (universeId, channel) => {
-            return universes[universeId].sender.values[channel] || 0;
+            return universes[universeId].sender.values[channel] === undefined ? 0 : universes[universeId].sender.values[channel];
         }
 
         //Reset a universe
         node.resetUniverse = (universeId) => {
             universes[universeId].sender.reset();
-            for(var i = 0; i < 512; i++) {
-                universes[universeId][i] = 0;
-            }
+            clearInterval(universes[universeId].transmitter);
         };
     }
 
