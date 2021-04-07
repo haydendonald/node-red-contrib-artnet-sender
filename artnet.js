@@ -4,7 +4,6 @@ module.exports = function(RED)
     var dmxnet = undefined;
     var universes = {};
     var universeSenders = [];
-    var universeValues = {};
 
     //Main Function
     function Artnet(config)
@@ -38,9 +37,9 @@ module.exports = function(RED)
                         "net": options.net
                     }),
                 };
-                for(var i = 0; i < 512; i++) {
-                    universes[uniId][i] = 0;
-                }
+                // for(var i = 0; i < 512; i++) {
+                //     universes[uniId][i] = 0;
+                // }
                 universeSenders[uniId] = setInterval(function() {
                     universes[uniId].sender.transmit();
                 }, 1);
@@ -52,11 +51,10 @@ module.exports = function(RED)
         //Set a channel to the universe
         node.setChannel = (universeId, channel, value) => {
             universes[universeId].sender.prepChannel(channel, value);            
-            universes[universeId][channel] = value;
         };
 
         node.getChannel = (universeId, channel) => {
-            return universes[universeId][channel];
+            return universes[universeId].sender.values[channel] || 0;
         }
 
         //Reset a universe
