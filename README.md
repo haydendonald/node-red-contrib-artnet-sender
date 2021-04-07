@@ -1,4 +1,4 @@
-# Panasonic Projector Control for NodeRed
+# Artnet for NodeRed
 This project provides sending of DMX data over multiple universes using Artnet via [dmxnet](https://github.com/margau/dmxnet) by margau.
 
 ## Currently under development!

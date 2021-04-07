@@ -54,8 +54,8 @@ module.exports = function(RED)
             node.startChannel = node.universeAuto * 512;
             node.universeCount = Math.ceil(node.channels / 512);
             for(var i = 0; i < node.universeCount; i++) {
-                var subnet = parseInt((node.universeAuto + i) / 16);
                 var net = parseInt((node.universeAuto + i) / 256);
+                var subnet = parseInt((node.universeAuto + i) / 16) - (net * 16);
                 var universe = (node.universeAuto + i) - ((subnet * 16) + (net * 256));
                 var id = node.artnet.addUniverse({
                     "ip": node.ipAddress,
