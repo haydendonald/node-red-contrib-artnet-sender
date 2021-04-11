@@ -27,37 +27,17 @@ module.exports = function(RED)
         //Add callbacks for status information
         node.addStatusCallback = function(func) {node.statusCallbacks.push(func);}
         node.addValueCallback = function(func) {node.valueCallbacks.push(func);}
-        // node.updateStatus = function(color, message) {
-        //     for(var i in node.statusCallbacks) {
-        //         node.statusCallbacks[i](color, message);
-        //     }
-        // }
-        // node.updateValue = function() {
-        //     for(var i in node.valueCallbacks) {
-        //         var ret = [];
-        //         for(var j = node.universeId; j < node.universeId; j++) {
-        //             ret[j] = {
-        //                 "channels": []
-        //             };
-        //             for(var k = 0; j < 512; j++) {
-        //                 ret[j].channels[k] = node.artnet.getChannel(j, k);
-        //             }
-        //         }
-
-        //         node.valueCallbacks[i](ret);
-        //     }
-        // }
 
         //Current bug: Stored channels are outputting as undefined
         node.incomingArtnetData = function(universe, data) {
             var channels = [];
-            for(var i = node.universeId; i < universe; i++) {
+            for(var i = 0; i < node.universeCount; i++) {
                 for(var j = 0; j < 512; j++) {
                     if(i == universe) {
                         channels[(i * 512) + j] = data[j];
                     }
                     else {
-                        channels[(i * 512) + j] = node.artnet.getChannel(i, j);
+                        channels[(i * 512) + j] = node.artnet.getChannel(i + node.universeId, j);
                     }
                 }
             }
