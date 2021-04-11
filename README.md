@@ -1,6 +1,16 @@
 # Artnet for NodeRed
 This project provides sending of DMX data over multiple universes using Artnet via [dmxnet](https://github.com/margau/dmxnet) by margau.
 
+# Installation
+* Install using the NodeRed [palette manager](https://nodered.org/docs/user-guide/runtime/adding-nodes) by searching for ```node-red-contrib-artnet-sender``` 
+* Another way of installing is to run ```npm install node-red-contrib-artnet-sender```
+
+# Features
+* Send multiple ArtNet universes
+* Can either use a manual mode entering the subnet, universe, net or have it automatically calculated simply using a universe and channel count.
+* Outputs the current values from ArtNet so this can be used to listen to ArtNet data
+* Multiple senders is supported by adding another ArtNet interface
+
 # Nodes
 ## Universe
 Provides access to a universe
